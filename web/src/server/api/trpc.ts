@@ -13,6 +13,7 @@ import { TRPCError, initTRPC } from "@trpc/server";
 import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import getDriver from "~/utils/neo4j";
 
 /**
  * 1. CONTEXT
@@ -38,9 +39,11 @@ type CreateContextOptions = {
  * @see https://create.t3.gg/en/usage/trpc#-serverapitrpcts
  */
 export const createInnerTRPCContext = ({ auth }: CreateContextOptions) => {
-  // TODO: setup neo4j driver here
+  const neo4jSession = getDriver().session();
+
   return {
-    auth
+    auth,
+    neo4jSession
   };
 };
 
@@ -92,6 +95,15 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
   });
 });
 
+const handleNeo4JSession = t.middleware(async ({ ctx, next }) => {
+  const result = await next({
+    ctx
+  });
+
+  await ctx.neo4jSession.close();
+  return result
+});
+
 /**
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
  *
@@ -113,9 +125,12 @@ export const createTRPCRouter = t.router;
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-export const publicProcedure = t.procedure;
+export const publicProcedure = t.procedure.use(handleNeo4JSession);
 
 /*
  * Protected procedure
  */ 
-export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+export const protectedProcedure = 
+  t.procedure
+    .use(enforceUserIsAuthed)
+    .use(handleNeo4JSession);
