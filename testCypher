@@ -1,0 +1,46 @@
+CREATE
+  (redes:Materia { name: 'REDES DE COMPUTADORAS', code: '1446', credits: 12 }),
+  (comDatos:Materia { name: 'COMUNICACION DE DATOS', code: 'CP364', credits: null  }),
+  (credRevalida:Materia { name: 'CREDITOS ASIGNADOS POR REVALIDA', code: 'AR30', credits: null  }),
+  (credNoAcum:Materia { name: 'CREDITOS NO ACUM. CON REDES DE COMPUTADORAS', code: '1446P', credits: null }),
+  (intRedes:Materia { name: 'INT. A LAS REDES DE COMPUTADORAS', code: '1433', credits: null }),
+  (intRedes2:Materia { name: 'INT. A LAS REDES DE COMPUTADORES', code: '1406', credits: null  }),
+  (aspBasicosRedes:Materia { name: 'ASPECTOS BASICOS DE REDES DE COMPUT', code: '1454', credits: null }),
+  (progIII:Materia { name: 'PROGRAMACION III', code: 'CP29', credits: null }),
+  (prog3:Materia { name: 'PROGRAMACION 3', code: '1323', credits: null }),
+  (analisis:Materia { code: 'CP1', name: 'ANALISIS MATEMATICO I', credits: null }),
+  (cdiv:Materia { code: '1061', name: 'CALCULO DIF. E INTEGRAL EN UNA VARIABLE', credits: null }),
+  (c1:Materia { code: '1020', name: 'CALCULO 1', credits: null }),
+  (c1_2:Materia { code: '1070', name: 'CALCULO 1', credits: null }),
+  (c1anual:Materia { code: '1052', name: 'CALCULO 1 (ANUAL)', credits: null }),
+  (calRevalida:Materia { code: 'CAL10', name: 'CREDITOS ASIGNADOS POR REVALIDA', credits: null }),
+  (calRevalida2:Materia { code: 'MAT33', name: 'CREDITOS ASIGNADOS POR REVALIDA', credits: null }),
+  (calNoAcum:Materia { code: '1020P', name: 'CREDITOS NO ACUM CALCULO 1', credits: null }),
+  (cdivNoAcum:Materia { code: '1061P', name: 'CREDITOS NO ACUM CDIV', credits: null }),
+  (arqui:Materia { code: '1443', name: 'ARQUITECTURA DE COMPUTADORAS', credits: null }),
+  (arqui1:Materia { code: '1424', name: 'ARQUITECTURA DE COMPUTADORES 1', credits: null }),
+  (arquiSis:Materia { code: 'CP28', name: 'ARQUITECTURA DE SISTEMAS', credits: null }),
+  (arquiNoAcum:Materia { code: '1443P', name: 'CREDITOS NO ACUM. CON ARQUITECTURA DE COMPUTADORAS', credits: null }),
+  (intArqui:Materia { code: '1403', name: 'INT. A LA ARQUITECTURA DE COMPUTADORES', credits: null }),
+  (sisOp:Materia { code: 'CP31', name: 'SISTEMAS OPERATIVOS', credits: null }),
+  (sisOp1:Materia { code: 'C350', name: 'SISTEMAS OPERATIVOS', credits: null }),
+  (sisOp2:Materia { code: '1511', name: 'SISTEMAS OPERATIVOS', credits: null }),
+  (sisOp3:Materia { code: '1518', name: 'SISTEMAS OPERATIVOS', credits: null }),
+  (sisOp4:Materia { code: '1532', name: 'SISTEMAS OPERATIVOS', credits: null }),
+  (sisOp5:Materia { code: '1537', name: 'SISTEMAS OPERATIVOS', credits: null })
+
+MATCH (redes:Materia { code: '1446'})
+CREATE
+  (redes)-[:HAS { type: 'all' }]->(p: Previatura)
+
+MATCH (redes:Materia {code:'1446'})-[:HAS {type:'all'}]->(p)
+CREATE 
+  (p)-[:SATISFIES {type: 'cant_have'}]->(cantHave:Previatura),
+  (cantHave)-[:SATISFIES { type: 'one_of' }]->(oneOf:Previatura),
+  (oneOf)-[:NEEDS { type: 'examen' }]->(:Materia { code: 'CP364'}),
+  (oneOf)-[:NEEDS { type: 'examen' }]->(:Materia { code: 'AR30'}),
+  (oneOf)-[:NEEDS { type: 'examen' }]->(:Materia { code: '1446P'}),
+  (oneOf)-[:NEEDS { type: 'examen' }]->(:Materia { code: '1433'}),
+  (oneOf)-[:NEEDS { type: 'examen' }]->(:Materia { code: '1406'})
+
+  // investigar si se puede representar type con labels, creo que seria mas facil de matchear y se representaria todo con las relaciones HAS, SATISFIES y NEEDS
