@@ -2,7 +2,10 @@ import { parse } from 'yaml';
 import { readFileSync } from 'fs';
 
 import * as z from 'zod';
+import neo4j from 'neo4j-driver'
+
 import { Obj, camelize } from './utils';
+import getDriver from './driver';
 
 const SUBJECTS_FILE_PATH = "./input/subjects.yml";
 
@@ -16,13 +19,38 @@ const subjectSchema = z.object({
 
 const subjectsSchema = z.array(subjectSchema);
 
-async function readSubjects() {
+function readSubjects() {
   const fileBuffer = readFileSync(SUBJECTS_FILE_PATH, 'utf8');
   const objects = Object.values(camelize(parse(fileBuffer) as Obj));
 
-  const subjects = subjectsSchema.parse(objects);
-
-  return subjects
+  return subjectsSchema.parse(objects);
 }
 
-readSubjects();
+async function main() {
+  const subjects = readSubjects();
+
+  const driver = getDriver().session();
+
+  console.log('Inserting ', subjects.length, ' subjects');
+
+  for (const [index, subject] of subjects.entries()) { 
+    const { name, code, credits, hasExam, subjectGroup } = subject;
+
+    await driver.run(
+      'CREATE (n: Materia { name: $name, code: $code, credits: $credits, hasExam: $hasExam, subjectGroup: $subjectGroup })',
+      {
+        name,
+        code,
+        credits: neo4j.int(credits),
+        hasExam: neo4j.int(+hasExam),
+        subjectGroup,
+      }
+    );
+
+    console.log('Inserted ', { name, code }, '---', index + 1, ' / ', subjects.length);
+  }
+
+  await driver.close();
+}
+
+main();
