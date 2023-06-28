@@ -9,6 +9,7 @@ import getDriver from './driver';
 
 const SUBJECTS_FILE_PATH = "./input/subjects.yml";
 const GROUPS_FILE_PATH = "./input/groups.yml";
+const PREREQUISITES_FILE_PATH = "./input/prerequisites.yml";
 
 const subjectSchema = z.object({
   code: z.string(),
@@ -28,6 +29,25 @@ const groupSchema = z.object({
 
 const groupsSchema = z.array(groupSchema);
 
+const basePrerequisiteSchema = z.object({
+  type: z.enum(['logical', 'subject', 'credits']).optional(),
+  logicalOperator: z.enum(['and', 'or', 'not', 'at_least']).optional(),
+  subjectNeededCode: z.string().optional(),
+  needs: z.enum(['exam', 'course', 'all', 'enrollment']).optional(),
+  subjectCode: z.string().optional(),
+  isExam: z.boolean().optional(),
+}); 
+
+type Prerequisite = z.infer<typeof basePrerequisiteSchema> & {
+  operands?: Prerequisite[];
+};
+
+const prerequisiteSchema: z.ZodType<Prerequisite> = basePrerequisiteSchema.extend({
+  operands: z.lazy(() => prerequisiteSchema.array()).optional(),
+});
+
+const prerequisitesSchema = z.array(prerequisiteSchema);
+
 function readSubjects() {
   const fileBuffer = readFileSync(SUBJECTS_FILE_PATH, 'utf8');
   const objects = Object.values(camelize(parse(fileBuffer) as Obj));
@@ -40,6 +60,23 @@ function readGroups() {
   const objects = Object.values(camelize(parse(fileBuffer) as Obj));
 
   return groupsSchema.parse(objects);
+}
+
+function readPrerequisites() {
+  const fileBuffer = readFileSync(PREREQUISITES_FILE_PATH, 'utf8');
+  const objects = Object.values(camelize(parse(fileBuffer) as Obj));
+
+  return prerequisitesSchema.parse(objects);
+}
+
+// Goes over current prerequisite and creates the structure in the database. In is a recursive function.
+function savePrerequisites(prerequisite: Prerequisite, prevId?: string) {
+  // Create Previatura node related to previous or subject with unique id
+  // if logical, always create a new Previatura
+  // if subject, only relate to subject and return
+  // if credits, only relate to group or specify credits
+  
+  // For each operand, call savePrerequisite with prevId id of subject just created
 }
 
 async function main() {
@@ -101,6 +138,10 @@ async function main() {
 
     console.log('Related ', { code, subjectGroup });
   }
+
+  const prerequisites = readPrerequisites();
+
+  console.log(prerequisites);
 
   await driver.close();
 }
