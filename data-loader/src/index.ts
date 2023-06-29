@@ -9,7 +9,7 @@ import getDriver from './driver';
 
 const SUBJECTS_FILE_PATH = "./input/subjects.yml";
 const GROUPS_FILE_PATH = "./input/groups.yml";
-const PREREQUISITES_FILE_PATH = "./input/prerequisites.yml";
+const PREREQUISITES_FILE_PATH = "./input/redes.yml";
 
 const subjectSchema = z.object({
   code: z.string(),
@@ -69,10 +69,47 @@ function readPrerequisites() {
   return prerequisitesSchema.parse(objects);
 }
 
+const mapLogicalOperatorToType = {
+  and: 'all',
+  not: 'cant_have',
+  or: 'one_of',
+  at_least: 'at_least'
+} as const;
+
 // Goes over current prerequisite and creates the structure in the database. In is a recursive function.
-function savePrerequisites(prerequisite: Prerequisite, prevId?: string) {
-  // Create Previatura node related to previous or subject with unique id
-  // if logical, always create a new Previatura
+function savePrerequisites(prerequisite: Prerequisite, prevId?: string, index?: number): string {
+  const { subjectCode, type, logicalOperator, needs, subjectNeededCode } = prerequisite;
+
+  // Base prerequisite
+  if (subjectCode && logicalOperator) {
+    const query: string = `
+      MATCH (subject: Subject { code: ${subjectCode} })
+      CREATE
+        (subject)-[:HAS { type: ${mapLogicalOperatorToType[logicalOperator]} }]->(prerequisite: Prerequisite)${ prerequisite.operands ? ',' : ''}
+        ${
+          prerequisite.operands?.map((operand, index) => 
+          `// ${index} sub group
+            ${savePrerequisites(operand, "prerequisite", index)}`).join(',\n')
+        }
+    `;
+    return query;
+  } else {
+    switch (type) {
+      case 'logical':
+        const type = mapLogicalOperatorToType[logicalOperator ?? 'and'];
+        const prerequisiteName = `${prevId}_${type}${ index ? `_${index}` : ''}`;
+        return `
+          (${prevId})-[:SATISFIES { type: '${type}' }]->(${prerequisiteName}:Prerequisite),
+          ${
+            prerequisite.operands?.map((operand, index) => savePrerequisites(operand, `${prerequisiteName}`, index)).join(',\n')
+          }
+        `.trim();
+      case 'subject':
+        return `(${prevId})-[:NEEDS { type: '${needs}' }]->(:Subject { code: '${subjectNeededCode}' })`;
+      default:
+        return 'NOT IMPLEMENTED'
+    }
+  }
   // if subject, only relate to subject and return
   // if credits, only relate to group or specify credits
   
@@ -146,4 +183,14 @@ async function main() {
   await driver.close();
 }
 
-main();
+const testPrerequisites = async () => {
+
+  const prerequisites = readPrerequisites();
+
+  prerequisites.forEach((prerequisite) => {
+    console.log(savePrerequisites(prerequisite));
+  });
+} 
+
+testPrerequisites();
+// main();
