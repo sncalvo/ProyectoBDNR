@@ -1,0 +1,205 @@
+[
+  {
+    "type": "logical",
+    "logicalOperator": "and",
+    "subjectCode": "1446",
+    "isExam": false,
+    "operands": [
+      {
+        "type": "logical",
+        "logicalOperator": "not",
+        "operands": [
+          {
+            "type": "logical",
+            "logicalOperator": "or",
+            "operands": [
+              {
+                "type": "subject",
+                "subjectNeededCode": "CP364",
+                "needs": "exam"
+              },
+              {
+                "type": "subject",
+                "subjectNeededCode": "AR30",
+                "needs": "exam"
+              },
+              {
+                "type": "subject",
+                "subjectNeededCode": "1446P",
+                "needs": "exam"
+              },
+              {
+                "type": "subject",
+                "subjectNeededCode": "1433",
+                "needs": "exam"
+              },
+              {
+                "type": "subject",
+                "subjectNeededCode": "1406",
+                "needs": "exam"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "logical",
+        "logicalOperator": "not",
+        "operands": [
+          {
+            "type": "subject",
+            "subjectNeededCode": "1454",
+            "needs": "exam"
+          }
+        ]
+      },
+      {
+        "type": "logical",
+        "logicalOperator": "or",
+        "operands": [
+          {
+            "type": "subject",
+            "subjectNeededCode": "CP29",
+            "needs": "exam"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "1323",
+            "needs": "exam"
+          }
+        ]
+      },
+      {
+        "type": "logical",
+        "logicalOperator": "or",
+        "operands": [
+          {
+            "type": "subject",
+            "subjectNeededCode": "CP1",
+            "needs": "exam"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "1061",
+            "needs": "exam"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "1020",
+            "needs": "exam"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "1070",
+            "needs": "exam"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "1052",
+            "needs": "exam"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "CAL10",
+            "needs": "exam"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "MAT33",
+            "needs": "exam"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "1020P",
+            "needs": "exam"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "1061P",
+            "needs": "exam"
+          }
+        ]
+      },
+      {
+        "type": "logical",
+        "logicalOperator": "or",
+        "operands": [
+          {
+            "type": "subject",
+            "subjectNeededCode": "1443",
+            "needs": "course"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "1424",
+            "needs": "course"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "CP28",
+            "needs": "exam"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "1443P",
+            "needs": "exam"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "1403",
+            "needs": "course"
+          }
+        ]
+      },
+      {
+        "type": "logical",
+        "logicalOperator": "or",
+        "operands": [
+          {
+            "type": "subject",
+            "subjectNeededCode": "CP31",
+            "needs": "exam"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "C350",
+            "needs": "exam"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "1511",
+            "needs": "course"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "1518",
+            "needs": "course"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "1532",
+            "needs": "course"
+          },
+          {
+            "type": "subject",
+            "subjectNeededCode": "1537",
+            "needs": "course"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "logical",
+    "logicalOperator": "and",
+    "subjectCode": "1446",
+    "isExam": true,
+    "operands": [
+      {
+        "type": "subject",
+        "subjectNeededCode": "1446",
+        "needs": "course"
+      }
+    ]
+  }
+]
