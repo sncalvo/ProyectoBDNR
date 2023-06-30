@@ -9,7 +9,7 @@ import getDriver from './driver';
 
 const SUBJECTS_FILE_PATH = "./input/subjects.yml";
 const GROUPS_FILE_PATH = "./input/groups.yml";
-const PREREQUISITES_FILE_PATH = "./input/redes.yml";
+const PREREQUISITES_FILE_PATH = "./input/prerequisites.yml";
 
 function makeid(length: number) {
     let result = '';
@@ -115,7 +115,7 @@ function savePrerequisites(prerequisite: Prerequisite, prevId?: string, index?: 
           ${matches.join(',') ?? ''}
       CREATE
         (subject)-[:HAS { type: '${mapLogicalOperatorToType[logicalOperator]}' }]->(prerequisite: Prerequisite)${create.length ? ',' : ''}
-        ${create.join('\n')}
+        ${create.join(',\n')}
     `;
     return [query, []];
   } else {
@@ -123,13 +123,24 @@ function savePrerequisites(prerequisite: Prerequisite, prevId?: string, index?: 
       case 'logical':
         const type = mapLogicalOperatorToType[logicalOperator ?? 'and'];
         const prerequisiteName = `${prevId}_${type}${index ? `_${index}` : ''}`;
+
+        const operandsQueries = operands?.map((operand, index) => savePrerequisites(operand, "prerequisite", index)) ?? [];
+        const { create, matches } = operandsQueries.reduce(
+          (prev, [createQuery, matchQueries]) => {
+            const create = [...prev.create, createQuery];
+            const matches = matchQueries.length ? [...prev.matches, matchQueries.join(',\n')] : [...prev.matches];
+            return ({ create, matches });
+          },
+          { create: [] as string[], matches: [] as string[] }
+        );
+
         return [`
           (${prevId})-[:SATISFIES { type: '${type}' }]->(${prerequisiteName}:Prerequisite),
           ${
-            operands?.map((operand, index) => savePrerequisites(operand, `${prerequisiteName}`, index)).join(',\n')
+            create.join(',\n')
           }
         `.trim(),
-          []
+          matches
         ];
       case 'subject':
         const subjectVarName = `subject_${index ? `_${index}` : ''}${prevId}_${needs}_${subjectNeededCode}`;
