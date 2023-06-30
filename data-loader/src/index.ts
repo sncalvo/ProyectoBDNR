@@ -106,8 +106,6 @@ function savePrerequisites(prerequisite: Prerequisite, prevId?: string, index?: 
       { create: [] as string[], matches: [] as string[] }
     );
 
-    console.log({ create, matches });
-
     const query = `
       MATCH
         (subject: Subject { code: '${subjectCode}' })
@@ -124,7 +122,7 @@ function savePrerequisites(prerequisite: Prerequisite, prevId?: string, index?: 
         const type = mapLogicalOperatorToType[logicalOperator ?? 'and'];
         const prerequisiteName = `${prevId}_${type}${index ? `_${index}` : ''}`;
 
-        const operandsQueries = operands?.map((operand, index) => savePrerequisites(operand, "prerequisite", index)) ?? [];
+        const operandsQueries = operands?.map((operand, index) => savePrerequisites(operand, prerequisiteName, index)) ?? [];
         const { create, matches } = operandsQueries.reduce(
           (prev, [createQuery, matchQueries]) => {
             const create = [...prev.create, createQuery];
@@ -149,9 +147,9 @@ function savePrerequisites(prerequisite: Prerequisite, prevId?: string, index?: 
       case 'credits':
         if (prerequisite.group) {
           const groupVarName = `credits_${index ? `_${index}` : ''}${prevId}_${needs}_${subjectNeededCode}`;
-          return [`(${prevId})-[:NEEDS { type: '${needs}', min: '${prerequisite.credits}' }]->(${groupVarName})`, [`(${groupVarName}:Group { code: '${prerequisite.group}' })`]];
+          return [`(${prevId})-[:SATISFIES { type: 'credits', min: '${prerequisite.credits}' }]->(${groupVarName})`, [`(${groupVarName}:Group { code: '${prerequisite.group}' })`]];
         } else {
-          return [`(${prevId})-[:NEEDS { type: '${needs}', min: '${prerequisite.credits}' }]->(:Prerequisite)`, []];
+          return [`(${prevId})-[:SATISFIES { type: 'credits', min: '${prerequisite.credits}' }]->(:Prerequisite)`, []];
         }
       default:
         throw 'NOT IMPLEMENTED';
@@ -231,7 +229,7 @@ const testPrerequisites = async (driver: Session) => {
     const query = savePrerequisites(prerequisite);
     try {
       await driver.run(query[0]);
-      console.log(prerequisite);
+      console.log('Prerequisite ', { prerequisite: prerequisite.subjectCode });
     } catch (error) {
       console.log(error, query, JSON.stringify(prerequisite));
     }
