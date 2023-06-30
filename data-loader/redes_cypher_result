@@ -1,0 +1,44 @@
+MATCH (subject: Subject { code: 1446 })
+CREATE
+(subject)-[:HAS { type: all }]->(prerequisite: Prerequisite),
+// 0 sub group
+(prerequisite)-[:SATISFIES { type: 'cant_have' }]->(prerequisite_cant_have:Prerequisite),
+(prerequisite_cant_have)-[:SATISFIES { type: 'one_of' }]->(prerequisite_cant_have_one_of:Prerequisite),
+(prerequisite_cant_have_one_of)-[:NEEDS { type: 'exam' }]->(:Subject { code: 'CP364' }),
+(prerequisite_cant_have_one_of)-[:NEEDS { type: 'exam' }]->(:Subject { code: 'AR30' }),
+(prerequisite_cant_have_one_of)-[:NEEDS { type: 'exam' }]->(:Subject { code: '1446P' }),
+(prerequisite_cant_have_one_of)-[:NEEDS { type: 'exam' }]->(:Subject { code: '1433' }),
+(prerequisite_cant_have_one_of)-[:NEEDS { type: 'exam' }]->(:Subject { code: '1406' }),
+// 1 sub group
+(prerequisite)-[:SATISFIES { type: 'cant_have' }]->(prerequisite_cant_have_1:Prerequisite),
+(prerequisite_cant_have_1)-[:NEEDS { type: 'exam' }]->(:Subject { code: '1454' }),
+// 2 sub group
+(prerequisite)-[:SATISFIES { type: 'one_of' }]->(prerequisite_one_of_2:Prerequisite),
+(prerequisite_one_of_2)-[:NEEDS { type: 'exam' }]->(:Subject { code: 'CP29' }),
+(prerequisite_one_of_2)-[:NEEDS { type: 'exam' }]->(:Subject { code: '1323' }),
+// 3 sub group
+(prerequisite)-[:SATISFIES { type: 'one_of' }]->(prerequisite_one_of_3:Prerequisite),
+(prerequisite_one_of_3)-[:NEEDS { type: 'exam' }]->(:Subject { code: 'CP1' }),
+(prerequisite_one_of_3)-[:NEEDS { type: 'exam' }]->(:Subject { code: '1061' }),
+(prerequisite_one_of_3)-[:NEEDS { type: 'exam' }]->(:Subject { code: '1020' }),
+(prerequisite_one_of_3)-[:NEEDS { type: 'exam' }]->(:Subject { code: '1070' }),
+(prerequisite_one_of_3)-[:NEEDS { type: 'exam' }]->(:Subject { code: '1052' }),
+(prerequisite_one_of_3)-[:NEEDS { type: 'exam' }]->(:Subject { code: 'CAL10' }),
+(prerequisite_one_of_3)-[:NEEDS { type: 'exam' }]->(:Subject { code: 'MAT33' }),
+(prerequisite_one_of_3)-[:NEEDS { type: 'exam' }]->(:Subject { code: '1020P' }),
+(prerequisite_one_of_3)-[:NEEDS { type: 'exam' }]->(:Subject { code: '1061P' }),
+// 4 sub group
+(prerequisite)-[:SATISFIES { type: 'one_of' }]->(prerequisite_one_of_4:Prerequisite),
+(prerequisite_one_of_4)-[:NEEDS { type: 'course' }]->(:Subject { code: '1443' }),
+(prerequisite_one_of_4)-[:NEEDS { type: 'course' }]->(:Subject { code: '1424' }),
+(prerequisite_one_of_4)-[:NEEDS { type: 'exam' }]->(:Subject { code: 'CP28' }),
+(prerequisite_one_of_4)-[:NEEDS { type: 'exam' }]->(:Subject { code: '1443P' }),
+(prerequisite_one_of_4)-[:NEEDS { type: 'course' }]->(:Subject { code: '1403' }),
+// 5 sub group
+(prerequisite)-[:SATISFIES { type: 'one_of' }]->(prerequisite_one_of_5:Prerequisite),
+(prerequisite_one_of_5)-[:NEEDS { type: 'exam' }]->(:Subject { code: 'CP31' }),
+(prerequisite_one_of_5)-[:NEEDS { type: 'exam' }]->(:Subject { code: 'C350' }),
+(prerequisite_one_of_5)-[:NEEDS { type: 'course' }]->(:Subject { code: '1511' }),
+(prerequisite_one_of_5)-[:NEEDS { type: 'course' }]->(:Subject { code: '1518' }),
+(prerequisite_one_of_5)-[:NEEDS { type: 'course' }]->(:Subject { code: '1532' }),
+(prerequisite_one_of_5)-[:NEEDS { type: 'course' }]->(:Subject { code: '1537' })
