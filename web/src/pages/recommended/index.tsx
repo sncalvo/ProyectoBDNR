@@ -4,9 +4,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { api, type RouterOutputs } from "~/utils/api";
 import { UserButton } from "@clerk/nextjs";
 import { DataTable } from "~/components/molecules/DataTable";
-import { Button } from "~/components/Button";
 
-type Subject = RouterOutputs["subjects"]["all"][number]
+type Subject = RouterOutputs["subjects"]["recommended"][number]
 
 const subjectColumns: ColumnDef<Subject>[] = [
   {
@@ -20,42 +19,12 @@ const subjectColumns: ColumnDef<Subject>[] = [
   {
     accessorKey: "credits",
     header: "Credits"
-  },
-  {
-    accessorKey: "passed",
-    header: "Passed"
-  },
-  {
-    id: "action",
-    cell: ({ row }) => {
-      const utils = api.useContext();
-      const markPassed = api.subjects.addPassed.useMutation({
-        onSuccess: () => utils.subjects.invalidate(),
-      });
-      const removePassed = api.subjects.removePassed.useMutation({
-        onSuccess: () => utils.subjects.invalidate(),
-      });
-
-      if (row.original.passed) {
-        return (
-          <Button variant="destructive" onClick={() => removePassed.mutate({ code: row.original.code })} loading={removePassed.isLoading}>
-            Marcar No Pronto
-          </Button>
-        );
-      }
-
-      return (
-        <Button variant="default" onClick={() => markPassed.mutate({ code: row.original.code })} loading={markPassed.isLoading}>
-          Marcar Pronto
-        </Button>
-      );
-    },
   }
 ]
 
 
-const Home: NextPage = () => {
-  const subjects = api.subjects.all.useQuery();
+const Recommended: NextPage = () => {
+  const subjects = api.subjects.recommended.useQuery();
 
   return (
     <>
@@ -73,7 +42,7 @@ const Home: NextPage = () => {
       </header>
       <main className="flex min-h-screen flex-col items-center justify-center">
         <h2 className="cursor-pointer text-[1.5rem] font-extrabold tracking-tight text-accent">
-          Materias
+          Recomendaciones
         </h2>
         <div className="container flex flex-col items-center justify-center px-4 py-16 ">
           {
@@ -87,4 +56,4 @@ const Home: NextPage = () => {
   );
 };
 
-export default Home;
+export default Recommended;
