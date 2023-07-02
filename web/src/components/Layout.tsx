@@ -65,7 +65,7 @@ const Layout = ({ children }: { children: ReactNode }) => (
   <>
     <SignedIn>
       <Header />
-      <main className="flex min-h-screen flex-col items-center justify-center">
+      <main className="flex flex-col items-center justify-center">
         {children}
       </main>
       <Footer />

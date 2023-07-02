@@ -77,16 +77,21 @@ export const subjectsRouter = createTRPCRouter({
       throw 'NOT FOUND';
     }
 
-    // I think we should group by subject and then order by count (many subjects can be prerequisites of the same subject)
-    // That way we will recommend the subjects that the user is more likely to course
-    const result = await ctx.neo4jSession.run<{ s: Subject }>(
-      `MATCH
-        (u: User{id: $userId})-[:PASSED]->(:Subject)<-[r:NEEDS]-(:Prerequisite)<-[:SATISFIES*]-(:Prerequisite)<-[:HAS]-(s: Subject)
-      RETURN s, count(s) as priority ORDER BY priority DESC`,
+    const result = await ctx.neo4jSession.run<{ subject: Subject, priority: number, originatorList: Subject[] }>(
+      `
+      MATCH
+        (user :User { id: $userId })-[:PASSED]->(originator :Subject)<-[:NEEDS]-(:Prerequisite)<-[:SATISFIES*]-(:Prerequisite)<-[:HAS]-(subject :Subject)
+      WHERE NOT exists((user)-[:PASSED]->(subject))
+      RETURN DISTINCT subject, count(DISTINCT originator) as priority, collect(DISTINCT originator) as originatorList ORDER BY priority DESC
+      `,
       { userId }
     );
 
-    const recommended = result.records.map((record) => record.get('s').properties);
+    const recommended = result.records.map((record) => ({
+      ...record.get('subject').properties,
+      originators: record.get('originatorList').map((subject) => subject.properties),
+      priority: record.get('priority')})
+    );
 
     return recommended;
   }),
@@ -98,22 +103,26 @@ export const subjectsRouter = createTRPCRouter({
     }
 
     const recommended = await ctx.neo4jSession.run<{ code: string }>(
-      `MATCH
-        (u: User{id: $userId})-[:PASSED]->(:Subject)<-[r:NEEDS]-(:Prerequisite)<-[:SATISFIES*]-(:Prerequisite)<-[:HAS]-(s: Subject)
-      RETURN s.code as code`,
+      `
+      MATCH
+        (user :User { id: $userId })-[:PASSED]->(originator :Subject)<-[:NEEDS]-(:Prerequisite)<-[:SATISFIES*]-(:Prerequisite)<-[:HAS]-(subject :Subject)
+      WHERE NOT exists((user)-[:PASSED]->(subject))
+      RETURN DISTINCT subject.code as code
+      `,
       { userId }
     );
 
     const codes = recommended.records.map((record) => record.get('code'));
 
     const result = await ctx.neo4jSession.run<{ code: string, p: Path<number> }>(
-      `UNWIND $codes as s
+      `
+      UNWIND $codes as s
       MATCH
-        p = (materia:Subject { code: s })-[:HAS]->(:Prerequisite)-[:SATISFIES*]->(:Prerequisite)-[:NEEDS]->(:Subject)
-      return materia.code as code, p`,
+        p = (materia:Subject { code: s })-[:HAS]->(:Prerequisite)-[:SATISFIES|CANT*]->(:Prerequisite)-[:NEEDS]->(:Subject)
+      return materia.code as code, p
+      `,
       { codes }
     );
-
 
     const subjectsAndPrerequisites = result.records.map((record) => ({ path: record.get('p'), subject: record.get('code') }));
     const prerequisitesPaths = subjectsAndPrerequisites.reduce((acc, { path, subject }) => {
@@ -127,7 +136,7 @@ export const subjectsRouter = createTRPCRouter({
     }, {} as Record<string, Path<number>[]>);
 
     type Edge = 
-      { label: 'SATISFIES' | 'NEEDS', properties: { type: 'one_of' | 'all' | 'cant_have' | 'exam' | 'course' }, node: PreNode };
+      { label: 'SATISFIES' | 'NEEDS' | 'CANT', properties: { type: 'one_of' | 'all' | 'exam' | 'course' }, node: PreNode };
     
     type PreNode = {
       id: number,
@@ -138,9 +147,11 @@ export const subjectsRouter = createTRPCRouter({
     type PassedSubjects = { code: string,  type: 'exam' | 'course' | null };
 
     const passedSubjects = await ctx.neo4jSession.run<PassedSubjects>(
-      `MATCH
-        (u: User{ id: $userId })-[passed :PASSED]->(s :Subject)
-      RETURN s.code as code, passed.type as type`,
+      `
+      MATCH
+        (u: User { id: $userId })-[passed :PASSED]->(s :Subject)
+      RETURN s.code as code, passed.type as type
+      `,
       { userId }
     );
 
@@ -165,8 +176,8 @@ export const subjectsRouter = createTRPCRouter({
           const currentRelationshipId = segment.relationship.identity.toString();
           if (currentNode!.edges[currentRelationshipId] === undefined) {
             currentNode!.edges[currentRelationshipId] = {
-              label: segment.relationship.type as 'SATISFIES' | 'NEEDS',
-              properties: segment.relationship.properties as { type: 'one_of' | 'all' | 'cant_have' },
+              label: segment.relationship.type as 'SATISFIES' | 'NEEDS' | 'CANT',
+              properties: segment.relationship.properties as { type: 'one_of' | 'all' },
               node: {
                 id: segment.end.identity,
                 properties: segment.end.properties,
@@ -188,6 +199,8 @@ export const subjectsRouter = createTRPCRouter({
           const edge = node.edges[edgeId]!;
           if (['SATISFIES', 'HAS'].includes(edge.label)) {
             return evaluatePrerequisites(edge.node, passedSubjects, edge.properties.type);
+          } else if ('CANT' === edge.label) {
+            return !evaluatePrerequisites(edge.node, passedSubjects, 'all')
           } else {
             // NEEDS
             const passedSubject = passedSubjects.find((passeSubjects) =>
@@ -204,8 +217,6 @@ export const subjectsRouter = createTRPCRouter({
           return result.every((el) => el);
         case 'one_of':
           return result.some((el) => el);
-        case 'cant_have':
-          return !result.some((el) => el);
         default:
           return false;
         }
@@ -222,5 +233,4 @@ export const subjectsRouter = createTRPCRouter({
 
     return subjects.map((subjectCode) => prerequisitesPaths[subjectCode]![0]?.start.properties);
   }),
-
 });
