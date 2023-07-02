@@ -20,6 +20,7 @@
     "@trpc/server": "^10.26.0",
     "class-variance-authority": "^0.6.0",
     "clsx": "^1.2.1",
+    "debounce": "^1.2.1",
     "lucide-react": "^0.241.0",
     "neo4j-driver": "^5.9.1",
     "next": "^13.4.2",
@@ -31,6 +32,7 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
+    "@types/debounce": "^1.2.1",
     "@types/eslint": "^8.37.0",
     "@types/node": "^18.16.0",
     "@types/prettier": "^2.7.2",
