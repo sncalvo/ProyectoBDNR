@@ -37,7 +37,7 @@ const subjectColumns: ColumnDef<Subject>[] = [
           </PopoverTrigger>
           <PopoverContent>
             <div className="flex flex-col gap-2">
-              { row.original.originators.map((subject) => <div>{subject.name}</div>)}
+              {row.original.originators.map((subject) => <div key={subject.code}>{subject.name}</div>)}
             </div>
           </PopoverContent>
         </Popover>
