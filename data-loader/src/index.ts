@@ -11,18 +11,6 @@ const SUBJECTS_FILE_PATH = "./input/subjects.yml";
 const GROUPS_FILE_PATH = "./input/groups.yml";
 const PREREQUISITES_FILE_PATH = "./input/prerequisites.yml";
 
-function makeid(length: number) {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    const charactersLength = characters.length;
-    let counter = 0;
-    while (counter < length) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-      counter += 1;
-    }
-    return result;
-}
-
 const subjectSchema = z.object({
   code: z.string(),
   name: z.string(),
@@ -90,6 +78,11 @@ function readPrerequisites() {
   return prerequisitesSchema.parse(objects);
 }
 
+type Values<T> = T[keyof T]
+type Operators = Values<typeof mapLogicalOperatorToType>;
+type SatisfiesRelation = `SATISFIES { type: '${Operators}' }`;
+type HasRelation = `HAS { type: '${Operators}' }`;
+
 // Goes over current prerequisite and creates the structure in the database. In is a recursive function.
 function savePrerequisites(prerequisite: Prerequisite, prevId?: string, index?: number): [string, string[]] {
   const { subjectCode, type, logicalOperator, needs, subjectNeededCode, operands } = prerequisite;
@@ -106,13 +99,15 @@ function savePrerequisites(prerequisite: Prerequisite, prevId?: string, index?: 
       { create: [] as string[], matches: [] as string[] }
     );
 
+    const has = mapLogicalOperatorToType[logicalOperator];
+    const hasRelation: HasRelation | "CANT" = (has == "cant_have" ? "CANT" : `HAS { type: '${has}' }`);
     const query = `
       MATCH
         (subject: Subject { code: '${subjectCode}' })
           ${matches.length ? ',' : ''}
           ${matches.join(',') ?? ''}
       CREATE
-        (subject)-[:HAS { type: '${mapLogicalOperatorToType[logicalOperator]}' }]->(prerequisite: Prerequisite)${create.length ? ',' : ''}
+        (subject)-[:${hasRelation}]->(prerequisite: Prerequisite)${create.length ? ',' : ''}
         ${create.join(',\n')}
     `;
     return [query, []];
@@ -132,8 +127,10 @@ function savePrerequisites(prerequisite: Prerequisite, prevId?: string, index?: 
           { create: [] as string[], matches: [] as string[] }
         );
 
+        const satisfiesRelation: SatisfiesRelation | "CANT" = (type == "cant_have" ? "CANT" : `SATISFIES { type: '${type}' }`);
+
         return [`
-          (${prevId})-[:SATISFIES { type: '${type}' }]->(${prerequisiteName}:Prerequisite),
+          (${prevId})-[:${satisfiesRelation}]->(${prerequisiteName}:Prerequisite),
           ${
             create.join(',\n')
           }

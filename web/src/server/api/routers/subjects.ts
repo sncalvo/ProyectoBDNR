@@ -9,19 +9,25 @@ type Subject = Node<Integer, {
 }>
 
 export const subjectsRouter = createTRPCRouter({
-  all: protectedProcedure.query(async ({ ctx }) => {
+  all: protectedProcedure.input(z.string().optional()).query(async ({ ctx, input }) => {
     const userId = ctx.auth.userId;
     if (!userId) {
       throw 'NOT FOUND';
     }
 
+    let whereClause = "";
+    if (input && input !== "") {
+      whereClause = `WHERE subject.name =~ '.*${input.toUpperCase()}.*'`;
+    }
+
     const result = await ctx.neo4jSession.run<{ subject: Subject, passed: boolean }>(
       `MERGE (u:User { id: $userId }) WITH u
         MATCH (subject: Subject)
+        ${whereClause}
         WITH subject, exists((u)-[:PASSED]->(subject)) AS passed
         RETURN subject, passed
-        ORDER BY passed DESC LIMIT 25`,
-      { userId }
+        ORDER BY passed DESC`,
+      { userId, nameSubstring: input }
     );
 
     const subjects = result.records.map((record) =>
