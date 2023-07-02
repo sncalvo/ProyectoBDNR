@@ -144,9 +144,9 @@ function savePrerequisites(prerequisite: Prerequisite, prevId?: string, index?: 
       case 'credits':
         if (prerequisite.group) {
           const groupVarName = `credits_${index ? `_${index}` : ''}${prevId}_${needs}_${subjectNeededCode}`;
-          return [`(${prevId})-[:SATISFIES { type: 'credits', min: '${prerequisite.credits}' }]->(${groupVarName})`, [`(${groupVarName}:Group { code: '${prerequisite.group}' })`]];
+          return [`(${prevId})-[:NEEDS_GROUP_CREDITS { min: ${prerequisite.credits} }]->(${groupVarName})`, [`(${groupVarName}:Group { code: '${prerequisite.group}' })`]];
         } else {
-          return [`(${prevId})-[:SATISFIES { type: 'credits', min: '${prerequisite.credits}' }]->(:Prerequisite)`, []];
+          return [`(${prevId})-[:NEEDS_CREDITS { min: ${prerequisite.credits} }]->(:Prerequisite)`, []];
         }
       default:
         throw 'NOT IMPLEMENTED';
