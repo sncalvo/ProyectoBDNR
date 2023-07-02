@@ -5,6 +5,10 @@ import { api, type RouterOutputs } from "~/utils/api";
 import { UserButton } from "@clerk/nextjs";
 import { DataTable } from "~/components/molecules/DataTable";
 import { Button } from "~/components/Button";
+import { Input } from "~/components/Input";
+import { useState } from "react";
+
+import { debounce } from "debounce";
 
 type Subject = RouterOutputs["subjects"]["all"][number]
 
@@ -55,7 +59,10 @@ const subjectColumns: ColumnDef<Subject>[] = [
 
 
 const Home: NextPage = () => {
-  const subjects = api.subjects.all.useQuery();
+  const [nameSearch, setNameSearch] = useState<string | undefined>();
+  const subjects = api.subjects.all.useQuery(nameSearch);
+
+  const setSearch = debounce(setNameSearch, 200);
 
   return (
     <>
@@ -75,7 +82,10 @@ const Home: NextPage = () => {
         <h2 className="cursor-pointer text-[1.5rem] font-extrabold tracking-tight text-accent">
           Materias
         </h2>
-        <div className="container flex flex-col items-center justify-center px-4 py-16 ">
+        <div className="flex w-96 my-3">
+          <Input type="text" placeholder="Search" onChange={(event) => setSearch(event.target.value)} />
+        </div>
+        <div className="container flex flex-col items-center justify-center px-4 py-16">
           {
             subjects.data
               ? <DataTable data={subjects.data} columns={subjectColumns} />
