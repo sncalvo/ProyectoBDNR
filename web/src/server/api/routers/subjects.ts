@@ -118,7 +118,7 @@ export const subjectsRouter = createTRPCRouter({
       `
       UNWIND $codes as s
       MATCH
-        p = (materia:Subject { code: s })-[:HAS]->(:Prerequisite)-[:SATISFIES*]->(:Prerequisite)-[:NEEDS]->(:Subject)
+        p = (materia:Subject { code: s })-[:HAS]->(:Prerequisite)-[:SATISFIES|CANT*]->(:Prerequisite)-[:NEEDS]->(:Subject)
       return materia.code as code, p
       `,
       { codes }
@@ -136,7 +136,7 @@ export const subjectsRouter = createTRPCRouter({
     }, {} as Record<string, Path<number>[]>);
 
     type Edge = 
-      { label: 'SATISFIES' | 'NEEDS', properties: { type: 'one_of' | 'all' | 'cant_have' | 'exam' | 'course' }, node: PreNode };
+      { label: 'SATISFIES' | 'NEEDS' | 'CANT', properties: { type: 'one_of' | 'all' | 'exam' | 'course' }, node: PreNode };
     
     type PreNode = {
       id: number,
@@ -176,8 +176,8 @@ export const subjectsRouter = createTRPCRouter({
           const currentRelationshipId = segment.relationship.identity.toString();
           if (currentNode!.edges[currentRelationshipId] === undefined) {
             currentNode!.edges[currentRelationshipId] = {
-              label: segment.relationship.type as 'SATISFIES' | 'NEEDS',
-              properties: segment.relationship.properties as { type: 'one_of' | 'all' | 'cant_have' },
+              label: segment.relationship.type as 'SATISFIES' | 'NEEDS' | 'CANT',
+              properties: segment.relationship.properties as { type: 'one_of' | 'all' },
               node: {
                 id: segment.end.identity,
                 properties: segment.end.properties,
@@ -199,6 +199,8 @@ export const subjectsRouter = createTRPCRouter({
           const edge = node.edges[edgeId]!;
           if (['SATISFIES', 'HAS'].includes(edge.label)) {
             return evaluatePrerequisites(edge.node, passedSubjects, edge.properties.type);
+          } else if ('CANT' === edge.label) {
+            return !evaluatePrerequisites(edge.node, passedSubjects, 'all')
           } else {
             // NEEDS
             const passedSubject = passedSubjects.find((passeSubjects) =>
@@ -215,8 +217,6 @@ export const subjectsRouter = createTRPCRouter({
           return result.every((el) => el);
         case 'one_of':
           return result.some((el) => el);
-        case 'cant_have':
-          return !result.some((el) => el);
         default:
           return false;
         }

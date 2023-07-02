@@ -52,33 +52,19 @@ const Recommended: NextPage = () => {
 
   return (
     <>
-      <Head>
-        <title>Mis Previas</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <header>
-        <div className="w-100 flex justify-between items-center p-5">
-          <h1 className="cursor-pointer text-[2rem] font-extrabold tracking-tight text-accent">
-            Mis Previas
-          </h1>
-          <UserButton />
-        </div>
-      </header>
-      <main className="flex flex-col items-center">
-        <h2 className="text-[1.5rem] font-extrabold tracking-tight text-accent">
-          Recomendaciones
-        </h2>
-        <p>
-          ¡Éstas son las materias que cumplís con la mayor cantidad de previas!
-        </p>
-        <div className="container flex flex-col items-center justify-center px-4 pt-5">
-          {
-            subjects.data
-              ? <DataTable data={subjects.data} columns={subjectColumns} />
-              : <Loader2 className="animate animate-spin" />
-          }
-        </div>
-      </main>
+      <h2 className="text-[1.5rem] font-extrabold tracking-tight text-accent">
+        Recomendaciones
+      </h2>
+      <p>
+        ¡Éstas son las materias que cumplís con la mayor cantidad de previas!
+      </p>
+      <div className="container flex flex-col items-center justify-center px-4 pt-5">
+        {
+          subjects.data
+            ? <DataTable data={subjects.data} columns={subjectColumns} />
+            : <Loader2 className="animate animate-spin" />
+        }
+      </div>
     </>
   );
 };
