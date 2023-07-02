@@ -101,7 +101,7 @@ export const subjectsRouter = createTRPCRouter({
       MATCH
         (user :User { id: $userId })-[:PASSED]->(originator :Subject)<-[:NEEDS]-(:Prerequisite)<-[:SATISFIES*]-(:Prerequisite)<-[:HAS]-(subject :Subject)
       WHERE NOT exists((user)-[:PASSED]->(subject))
-      RETURN DISTINCT originator.code as orginator_code, originator.name as originator_name, subject.code as code, subject.name as name
+      RETURN DISTINCT subject.code as code
       `,
       { userId }
     );
@@ -109,13 +109,14 @@ export const subjectsRouter = createTRPCRouter({
     const codes = recommended.records.map((record) => record.get('code'));
 
     const result = await ctx.neo4jSession.run<{ code: string, p: Path<number> }>(
-      `UNWIND $codes as s
+      `
+      UNWIND $codes as s
       MATCH
         p = (materia:Subject { code: s })-[:HAS]->(:Prerequisite)-[:SATISFIES*]->(:Prerequisite)-[:NEEDS]->(:Subject)
-      return materia.code as code, p`,
+      return materia.code as code, p
+      `,
       { codes }
     );
-
 
     const subjectsAndPrerequisites = result.records.map((record) => ({ path: record.get('p'), subject: record.get('code') }));
     const prerequisitesPaths = subjectsAndPrerequisites.reduce((acc, { path, subject }) => {
@@ -140,9 +141,11 @@ export const subjectsRouter = createTRPCRouter({
     type PassedSubjects = { code: string,  type: 'exam' | 'course' | null };
 
     const passedSubjects = await ctx.neo4jSession.run<PassedSubjects>(
-      `MATCH
-        (u: User{ id: $userId })-[passed :PASSED]->(s :Subject)
-      RETURN s.code as code, passed.type as type`,
+      `
+      MATCH
+        (u: User { id: $userId })-[passed :PASSED]->(s :Subject)
+      RETURN s.code as code, passed.type as type
+      `,
       { userId }
     );
 
@@ -224,5 +227,4 @@ export const subjectsRouter = createTRPCRouter({
 
     return subjects.map((subjectCode) => prerequisitesPaths[subjectCode]![0]?.start.properties);
   }),
-
 });

@@ -69,9 +69,9 @@ const Recommended: NextPage = () => {
           Recomendaciones
         </h2>
         <p>
-          ¡Éstas son las materias que cumplis con la mayor cantidad de previas!
+          ¡Éstas son las materias que cumplís con la mayor cantidad de previas!
         </p>
-        <div className="container flex flex-col items-center justify-center px-4 pt-5 ">
+        <div className="container flex flex-col items-center justify-center px-4 pt-5">
           {
             subjects.data
               ? <DataTable data={subjects.data} columns={subjectColumns} />

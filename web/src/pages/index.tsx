@@ -5,6 +5,7 @@ import { api, type RouterOutputs } from "~/utils/api";
 import { UserButton } from "@clerk/nextjs";
 import { DataTable } from "~/components/molecules/DataTable";
 import { Button } from "~/components/Button";
+import { Loader2 } from "lucide-react";
 
 type Subject = RouterOutputs["subjects"]["all"][number]
 
@@ -71,15 +72,15 @@ const Home: NextPage = () => {
           <UserButton />
         </div>
       </header>
-      <main className="flex min-h-screen flex-col items-center justify-center">
-        <h2 className="cursor-pointer text-[1.5rem] font-extrabold tracking-tight text-accent">
+      <main className="flex flex-col items-center justify-center">
+        <h2 className=" text-[1.5rem] font-extrabold tracking-tight text-accent">
           Materias
         </h2>
-        <div className="container flex flex-col items-center justify-center px-4 py-16 ">
+        <div className="container flex flex-col items-center justify-center px-4 pt-5 ">
           {
             subjects.data
               ? <DataTable data={subjects.data} columns={subjectColumns} />
-              : "Loading tRPC query..."
+              : <Loader2 className="animate animate-spin" />
           }
         </div>
       </main>
