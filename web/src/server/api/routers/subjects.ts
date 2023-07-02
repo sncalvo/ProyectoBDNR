@@ -71,16 +71,21 @@ export const subjectsRouter = createTRPCRouter({
       throw 'NOT FOUND';
     }
 
-    // I think we should group by subject and then order by count (many subjects can be prerequisites of the same subject)
-    // That way we will recommend the subjects that the user is more likely to course
-    const result = await ctx.neo4jSession.run<{ s: Subject }>(
-      `MATCH
-        (u: User{id: $userId})-[:PASSED]->(:Subject)<-[r:NEEDS]-(:Prerequisite)<-[:SATISFIES*]-(:Prerequisite)<-[:HAS]-(s: Subject)
-      RETURN s, count(s) as priority ORDER BY priority DESC`,
+    const result = await ctx.neo4jSession.run<{ subject: Subject, priority: number, originatorList: Subject[] }>(
+      `
+      MATCH
+        (user :User { id: $userId })-[:PASSED]->(originator :Subject)<-[:NEEDS]-(:Prerequisite)<-[:SATISFIES*]-(:Prerequisite)<-[:HAS]-(subject :Subject)
+      WHERE NOT exists((user)-[:PASSED]->(subject))
+      RETURN DISTINCT subject, count(DISTINCT originator) as priority, collect(DISTINCT originator) as originatorList ORDER BY priority DESC
+      `,
       { userId }
     );
 
-    const recommended = result.records.map((record) => record.get('s').properties);
+    const recommended = result.records.map((record) => ({
+      ...record.get('subject').properties,
+      originators: record.get('originatorList').map((subject) => subject.properties),
+      priority: record.get('priority')})
+    );
 
     return recommended;
   }),
@@ -92,9 +97,12 @@ export const subjectsRouter = createTRPCRouter({
     }
 
     const recommended = await ctx.neo4jSession.run<{ code: string }>(
-      `MATCH
-        (u: User{id: $userId})-[:PASSED]->(:Subject)<-[r:NEEDS]-(:Prerequisite)<-[:SATISFIES*]-(:Prerequisite)<-[:HAS]-(s: Subject)
-      RETURN s.code as code`,
+      `
+      MATCH
+        (user :User { id: $userId })-[:PASSED]->(originator :Subject)<-[:NEEDS]-(:Prerequisite)<-[:SATISFIES*]-(:Prerequisite)<-[:HAS]-(subject :Subject)
+      WHERE NOT exists((user)-[:PASSED]->(subject))
+      RETURN DISTINCT originator.code as orginator_code, originator.name as originator_name, subject.code as code, subject.name as name
+      `,
       { userId }
     );
 

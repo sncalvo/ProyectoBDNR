@@ -4,21 +4,45 @@ import { ColumnDef } from "@tanstack/react-table";
 import { api, type RouterOutputs } from "~/utils/api";
 import { UserButton } from "@clerk/nextjs";
 import { DataTable } from "~/components/molecules/DataTable";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/Popover"
+import { Info, Loader2 } from 'lucide-react';
 
 type Subject = RouterOutputs["subjects"]["recommended"][number]
 
 const subjectColumns: ColumnDef<Subject>[] = [
   {
     accessorKey: "code",
-    header: "Code"
+    header: "Código"
   },
   {
     accessorKey: "name",
-    header: "Name"
+    header: "Nombre"
   },
   {
     accessorKey: "credits",
-    header: "Credits"
+    header: "Créditos"
+  },
+  {
+    accessorKey: "originators",
+    header: "Originadores",
+    cell: ({ row }) => (
+      <div className="flex items-center justify-center">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Info className="cursor-pointer" />
+          </PopoverTrigger>
+          <PopoverContent>
+            <div className="flex flex-col gap-2">
+              { row.original.originators.map((subject) => <div>{subject.name}</div>)}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+    )
   }
 ]
 
@@ -40,15 +64,18 @@ const Recommended: NextPage = () => {
           <UserButton />
         </div>
       </header>
-      <main className="flex min-h-screen flex-col items-center justify-center">
-        <h2 className="cursor-pointer text-[1.5rem] font-extrabold tracking-tight text-accent">
+      <main className="flex flex-col items-center">
+        <h2 className="text-[1.5rem] font-extrabold tracking-tight text-accent">
           Recomendaciones
         </h2>
-        <div className="container flex flex-col items-center justify-center px-4 py-16 ">
+        <p>
+          ¡Éstas son las materias que cumplis con la mayor cantidad de previas!
+        </p>
+        <div className="container flex flex-col items-center justify-center px-4 pt-5 ">
           {
             subjects.data
               ? <DataTable data={subjects.data} columns={subjectColumns} />
-              : "Loading tRPC query..."
+              : <Loader2 className="animate animate-spin" />
           }
         </div>
       </main>
