@@ -66,33 +66,19 @@ const Home: NextPage = () => {
 
   return (
     <>
-      <Head>
-        <title>Mis Previas</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <header>
-        <div className="w-100 flex justify-between items-center p-5">
-          <h1 className="cursor-pointer text-[2rem] font-extrabold tracking-tight text-accent">
-            Mis Previas
-          </h1>
-          <UserButton />
-        </div>
-      </header>
-      <main className="flex min-h-screen flex-col items-center justify-center">
-        <h2 className="cursor-pointer text-[1.5rem] font-extrabold tracking-tight text-accent">
-          Materias
-        </h2>
-        <div className="flex w-96 my-3">
-          <Input type="text" placeholder="Search" onChange={(event) => setSearch(event.target.value)} />
-        </div>
-        <div className="container flex flex-col items-center justify-center px-4 py-16">
-          {
-            subjects.data
-              ? <DataTable data={subjects.data} columns={subjectColumns} />
-              : "Loading tRPC query..."
-          }
-        </div>
-      </main>
+      <h2 className="cursor-pointer text-[1.5rem] font-extrabold tracking-tight text-accent">
+        Materias
+      </h2>
+      <div className="flex w-96 my-3">
+        <Input type="text" placeholder="Search" onChange={(event) => setSearch(event.target.value)} />
+      </div>
+      <div className="container flex flex-col items-center justify-center px-4 py-16">
+        {
+          subjects.data
+            ? <DataTable data={subjects.data} columns={subjectColumns} />
+            : "Loading tRPC query..."
+        }
+      </div>
     </>
   );
 };
