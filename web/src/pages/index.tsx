@@ -27,10 +27,6 @@ const subjectColumns: ColumnDef<Subject>[] = [
     header: "Credits"
   },
   {
-    accessorKey: "passed",
-    header: "Passed"
-  },
-  {
     id: "action",
     cell: ({ row }) => {
       const utils = api.useContext();
@@ -44,14 +40,14 @@ const subjectColumns: ColumnDef<Subject>[] = [
       if (row.original.passed) {
         return (
           <Button variant="destructive" onClick={() => removePassed.mutate({ code: row.original.code })} loading={removePassed.isLoading}>
-            Marcar No Pronto
+            Marcar No Completada
           </Button>
         );
       }
 
       return (
         <Button variant="default" onClick={() => markPassed.mutate({ code: row.original.code })} loading={markPassed.isLoading}>
-          Marcar Pronto
+          Marcar Completada
         </Button>
       );
     },
