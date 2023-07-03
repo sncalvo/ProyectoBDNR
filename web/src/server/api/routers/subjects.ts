@@ -118,11 +118,25 @@ export const subjectsRouter = createTRPCRouter({
       `
       UNWIND $codes as s
       MATCH
-        p = (materia:Subject { code: s })-[:HAS]->(:Prerequisite)-[:SATISFIES|CANT*]->(:Prerequisite)-[:NEEDS]->(:Subject)
+        p = (materia:Subject { code: s })-[:HAS]->(:Prerequisite)-[:SATISFIES|CANT*0..]->(:Prerequisite)-[:NEEDS|NEEDS_GROUP_CREDITS|NEEDS_CREDITS]->(:Subject|Group|Prerequisite)
       return materia.code as code, p
       `,
       { codes }
     );
+
+    const credits = (await ctx.neo4jSession.run<{ credits: number, code: string }>(
+      `
+      MATCH (u :User { id: $userId })-[:PASSED]->(subject :Subject)-[:BELONGS]->(group :Group)
+      RETURN count(group) as count, sum(subject.credits) as credits, group.code as code
+      UNION
+      MATCH (u :User { id: $userId })-[:PASSED]->(subject :Subject)
+      RETURN 'total' as count, sum(subject.credits) as credits, 'total' as code
+      `,
+      { userId }
+    )).records.map((record) => ({ credits: record.get('credits'), code: record.get('code') })).reduce((acc, group) => {
+      acc[group.code] = group.credits;
+      return acc;
+    }, {} as Record<string, number>);
 
     const subjectsAndPrerequisites = result.records.map((record) => ({ path: record.get('p'), subject: record.get('code') }));
     const prerequisitesPaths = subjectsAndPrerequisites.reduce((acc, { path, subject }) => {
@@ -135,12 +149,15 @@ export const subjectsRouter = createTRPCRouter({
       return acc;
     }, {} as Record<string, Path<number>[]>);
 
-    type Edge = 
-      { label: 'SATISFIES' | 'NEEDS' | 'CANT', properties: { type: 'one_of' | 'all' | 'exam' | 'course' }, node: PreNode };
+    type Edge = {
+      label: 'SATISFIES' | 'NEEDS' | 'CANT' | 'NEEDS_GROUP_CREDITS' | 'NEEDS_CREDITS',
+      properties: { type: 'one_of' | 'all' | 'exam' | 'course' | undefined, credits: number | undefined },
+      node: PreNode
+    };
     
     type PreNode = {
       id: number,
-      properties: Record<string, string>,
+      properties: Record<string, string | undefined>,
       edges: Record<string, Edge>
     }
 
@@ -176,8 +193,8 @@ export const subjectsRouter = createTRPCRouter({
           const currentRelationshipId = segment.relationship.identity.toString();
           if (currentNode!.edges[currentRelationshipId] === undefined) {
             currentNode!.edges[currentRelationshipId] = {
-              label: segment.relationship.type as 'SATISFIES' | 'NEEDS' | 'CANT',
-              properties: segment.relationship.properties as { type: 'one_of' | 'all' },
+              label: segment.relationship.type as Edge["label"],
+              properties: segment.relationship.properties as Edge["properties"],
               node: {
                 id: segment.end.identity,
                 properties: segment.end.properties,
@@ -198,9 +215,15 @@ export const subjectsRouter = createTRPCRouter({
         const result = Object.keys(node.edges).map((edgeId) => {
           const edge = node.edges[edgeId]!;
           if (['SATISFIES', 'HAS'].includes(edge.label)) {
-            return evaluatePrerequisites(edge.node, passedSubjects, edge.properties.type);
+            return evaluatePrerequisites(edge.node, passedSubjects, edge.properties.type!);
           } else if ('CANT' === edge.label) {
-            return !evaluatePrerequisites(edge.node, passedSubjects, 'all')
+            return !evaluatePrerequisites(edge.node, passedSubjects, 'all');
+          } else if ('NEEDS_GROUP_CREDITS' === edge.label) {
+            const groupCredits = credits[edge.node.properties.code!];
+            const result = edge.properties.credits! <= (groupCredits ?? 0);
+            return result;
+          } else if ('NEEDS_CREDITS' === edge.label) {
+            return edge.properties.credits! <= (credits['total'] ?? 0);
           } else {
             // NEEDS
             const passedSubject = passedSubjects.find((passeSubjects) =>
