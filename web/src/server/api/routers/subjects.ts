@@ -151,7 +151,7 @@ export const subjectsRouter = createTRPCRouter({
 
     type Edge = {
       label: 'SATISFIES' | 'NEEDS' | 'CANT' | 'NEEDS_GROUP_CREDITS' | 'NEEDS_CREDITS',
-      properties: { type: 'one_of' | 'all' | 'exam' | 'course' | undefined, credits: number | undefined },
+      properties: { type: 'one_of' | 'all' | 'exam' | 'course' | undefined, min: number | undefined },
       node: PreNode
     };
     
@@ -220,10 +220,11 @@ export const subjectsRouter = createTRPCRouter({
             return !evaluatePrerequisites(edge.node, passedSubjects, 'all');
           } else if ('NEEDS_GROUP_CREDITS' === edge.label) {
             const groupCredits = credits[edge.node.properties.code!];
-            const result = edge.properties.credits! <= (groupCredits ?? 0);
+            const result = edge.properties.min! <= (groupCredits ?? 0);
             return result;
           } else if ('NEEDS_CREDITS' === edge.label) {
-            return edge.properties.credits! <= (credits['total'] ?? 0);
+            const result = edge.properties.min! <= (credits['total'] ?? 0);
+            return result
           } else {
             // NEEDS
             const passedSubject = passedSubjects.find((passeSubjects) =>
